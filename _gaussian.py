@@ -1,15 +1,22 @@
 import torch
 import numpy as np
+from _kmeans import KMeans
 
 
 class GaussianMixture:
-    def __init__(self, n_components):
+    def __init__(self, n_components, device=None, batch_size=50000):
         self.n_components = n_components
+        self.kmeans = KMeans(n_components, device=device, max_iter=10)
+        self.batch_size = batch_size
+        self.device = device
 
-    def fit_predict(self, x, select, weights, delta=1.e-3, eps=1.e-6, n_iter=100, top=10):  # (n, d,)
+    def fit_predict(self, x, delta=1.e-3, eps=1.e-6, n_iter=100, top=10):  # (n, d,)
+        _, select, weights = self.kmeans.fit_predict(x)
+        del self.kmeans
+
         self.n_components = len(weights)
         ind = select.coalesce().indices()
-        self.batch = x.shape[0] * self.n_components // 4000001 + 1
+        self.batch = x.shape[0] * self.n_components // (self.batch_size + 1) + 1
         self.log2pi = -.5 * x.shape[1] * np.log(2. * np.pi)
         self.mu = torch.sparse.mm(select, x) / weights.unsqueeze(1)
         self.var = torch.stack([(x.index_select(0, ind[1][ind[0] == i]) - self.mu[i]).pow(2).mean(0)
@@ -17,7 +24,7 @@ class GaussianMixture:
         self.pi = (weights / x.shape[0]).unsqueeze(0) + eps
 
         probs, self.log_likelihood = self._e_step(x)
-        resp = torch.nn.functional.softmax(probs, dim=1)
+        resp = torch.softmax(probs, dim=1)
 
         for i in range(n_iter):
             log_likelihood_old = self.log_likelihood
@@ -29,7 +36,7 @@ class GaussianMixture:
 
             # e_step
             probs, self.log_likelihood = self._e_step(x)
-            resp = torch.nn.functional.softmax(probs, dim=1)
+            resp = torch.softmax(probs, dim=1)
 
             # check convergence
             if (self.log_likelihood - log_likelihood_old < delta or
@@ -37,11 +44,11 @@ class GaussianMixture:
                 break
 
         top = min(top, self.n_components)
-        probs = torch.nn.functional.softmax(probs, dim=1)
+        probs = torch.softmax(probs, dim=1)
         topk = probs.topk(top, dim=1)
         probs = topk.values.view(-1)
         labels = topk.indices.view(-1)[probs > .1]
-        x_ind = torch.arange(x.shape[0], device=device).repeat_interleave(top)[probs > .1]
+        x_ind = torch.arange(x.shape[0], device=self.device).repeat_interleave(top)[probs > .1]
         probs = probs[probs > .1]
         ind = torch.stack([labels, x_ind])
         select = torch.sparse_coo_tensor(ind, probs, (self.n_components, x.shape[0]))

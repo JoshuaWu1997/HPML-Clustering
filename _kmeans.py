@@ -1,5 +1,6 @@
 import torch
 import numpy as np
+import my_cuda_util
 
 
 class KMeans:
@@ -12,7 +13,7 @@ class KMeans:
             device=None,
             max_iter=300,
             tol=1e-4,
-            batch_size=200000000
+            batch_size=100000000
     ):
         self.n_clusters = n_clusters
         self.random_state = random_state
@@ -23,6 +24,31 @@ class KMeans:
         self.labels_ = None
         self.select_ = None
         self.X_dist = None
+        self.my_cuda = kernel_cuda
+        if kernel == 'l2':
+            self.dist = self.cdist
+        elif kernel.startswith('m'):
+            self.dist = self.mdist
+            self.p = int(kernel[1:])
+        else:
+            raise NotImplementedError
+
+    def cdist(self, x, y, cuda=False):
+        batch_size = x.shape[0] * y.shape[0] * x.shape[1] // (self.batch_size + 1) + 1
+        if not cuda:
+            z = [torch.cdist(x, by) for by in y.chunk(batch_size)]
+            return torch.cat(z, dim=-1)
+        else:
+            raise NotImplementedError
+
+    def mdist(self, x, y, cuda=False):
+        batch_size = x.shape[0] * y.shape[0] * x.shape[1] // (self.batch_size + 1) + 1
+        if not cuda:
+            z = [((x.unsqueeze(1) - by.unsqueeze(0)).abs() ** self.p).sum(-1) for by in y.chunk(batch_size)]
+            z = torch.cat(z, dim=-1)
+        else:
+            z = my_cuda_util.mdist(x, y, self.p)
+        return z ** (1 / self.p)
 
     def _initial(self, X):
         select = torch.randint(0, self.n_samples, (1,), device=self.device)
@@ -31,7 +57,7 @@ class KMeans:
 
         for i in range(self.n_clusters):
             centers[i] = X.index_select(0, select)
-            dist[i] = torch.cdist(X.index_select(0, select), X)
+            dist[i] = self.dist(X.index_select(0, select), X, self.my_cuda)
             if i == 0:
                 minimum = dist[0]
             else:
@@ -52,7 +78,8 @@ class KMeans:
         x = torch.arange(self.n_samples, device=self.device)
         ones = torch.ones_like(x).float()
         for _iter in range(self.max_iter):
-            labels = torch.cat([torch.argmin(torch.cdist(bx, centers), dim=1).view(-1) for bx in X.chunk(self.batch)])
+            dist = self.dist(X, centers, self.my_cuda)
+            labels = torch.argmin(dist, dim=-1).view(-1)
             select = torch.sparse_coo_tensor(torch.stack([labels, x]), ones, (self.n_clusters, self.n_samples))
             weights = torch.sparse.sum(select, dim=1).to_dense()
             new_centers = torch.sparse.mm(select, X)[weights > 0] / weights[weights > 0].unsqueeze(1)
@@ -63,21 +90,5 @@ class KMeans:
                 if ((new_centers - centers).norm(dim=1) < self.tol).sum() == self.n_clusters:
                     break
             centers = new_centers.detach().clone()
-
-        if gamma is not None:
-            m = torch.nn.Softmax(dim=1)
-            dist = torch.cat([m(-gamma * torch.cdist(bx, centers).pow(2)) for bx in X.chunk(self.batch)], dim=0)
-            sort = torch.sort(dist, dim=1)
-            probs = sort.values.view(-1)
-            labels = sort.indices.view(-1)[probs > .95 / self.n_clusters]
-            x_ind = torch.arange(x.shape[0], device=self.device).repeat_interleave(
-                self.n_clusters)[probs > .95 / self.n_clusters]
-            probs = probs[probs > .95 / self.n_clusters]
-            ind = torch.stack([labels, x_ind])
-            select = torch.sparse_coo_tensor(ind, probs, (self.n_clusters, x.shape[0]))
-            try:
-                weights = torch.sparse.sum(select, dim=1).to_dense()
-            except:
-                print(select)
 
         return labels.cpu().numpy(), select, weights
