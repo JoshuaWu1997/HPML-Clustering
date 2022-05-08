@@ -12,7 +12,7 @@ class KMeans:
             device=None,
             max_iter=300,
             tol=1e-4,
-            batch_size=1000000
+            batch_size=200000000
     ):
         self.n_clusters = n_clusters
         self.random_state = random_state
@@ -26,16 +26,12 @@ class KMeans:
 
     def _initial(self, X):
         select = torch.randint(0, self.n_samples, (1,), device=self.device)
-        if self.X_dist is None:
-            batch = X.shape[0] * X.shape[1] ** 2 // (self.batch_size + 1) + 1
-            self.X_dist = [torch.cdist(X, bx) for bx in X.chunk(batch)]
-            self.X_dist = torch.cat(self.X_dist, dim=-1)
         centers = torch.zeros((self.n_clusters, self.n_features), device=self.device)
         dist = torch.zeros((self.n_clusters, self.n_samples), device=self.device)
 
         for i in range(self.n_clusters):
             centers[i] = X.index_select(0, select)
-            dist[i] = self.X_dist.index_select(0, select)
+            dist[i] = torch.cdist(X.index_select(0, select), X)
             if i == 0:
                 minimum = dist[0]
             else:
