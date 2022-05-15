@@ -8,7 +8,7 @@
    1. Sklearn
    2. Pytorch-cpu
    3. Pytorch-gpu-l2
-   4. Pytorch-gpu-rbf/Minkowski
+   4. Pytorch-gpu-Minkowski
 2. GMM
    1. Sklearn
    2. Pytorch-cpu
@@ -28,3 +28,8 @@
 1. Total time
 2. Accuracy
 
+
+
+$d(x,y) = (\sum^n_{i=1}(x_i - y_i)^2)^{\frac{1}{2}}$
+
+$d(x,y) = (\sum^n_{i=1}|x_i - y_i|^p)^{\frac{1}{p}}$
