@@ -13,7 +13,10 @@ class KMeans:
             device=None,
             max_iter=300,
             tol=1e-4,
-            batch_size=100000000
+            # batch_size=2000000000,  # GPU l2
+            # batch_size=10000000,  # CPU m3
+            batch_size=20000000,  # GPU m3
+            # batch_size=2000000000,  # GPU cuda m3
     ):
         self.n_clusters = n_clusters
         self.random_state = random_state
@@ -44,10 +47,14 @@ class KMeans:
     def mdist(self, x, y, cuda=False):
         batch_size = x.shape[0] * y.shape[0] * x.shape[1] // (self.batch_size + 1) + 1
         if not cuda:
-            z = [((x.unsqueeze(1) - by.unsqueeze(0)).abs() ** self.p).sum(-1) for by in y.chunk(batch_size)]
-            z = torch.cat(z, dim=-1)
+            if self.device == 'cuda':
+                z = [((x.unsqueeze(1) - by.unsqueeze(0)).abs() ** self.p).sum(-1) for by in y.chunk(batch_size)]
+                z = torch.cat(z, dim=-1)
+            else:
+                z = ((x.unsqueeze(1) - y.unsqueeze(0)).abs() ** self.p).sum(-1)
         else:
             z = my_cuda_util.mdist(x, y, self.p)
+            torch.cuda.synchronize()
         return z ** (1 / self.p)
 
     def _initial(self, X):

@@ -2,9 +2,9 @@
 #include <cuda_runtime.h>
 #include <stdio.h>
 
-#define TX 16
-#define TY 16
-#define TZ 32
+#define TX 8
+#define TY 8
+#define TZ 16
 
 #define TTX 32
 #define TTY 32
