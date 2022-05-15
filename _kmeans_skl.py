@@ -31,7 +31,7 @@ if __name__ == '__main__':
         trainset, batch_size=50000, shuffle=True, num_workers=0)
 
     for feature, label in trainloader:
-        feature = feature.numpy().reshape(50000,-1)
+        feature = feature.numpy().reshape(50000, -1)
 
         cls.fit(feature)
 
