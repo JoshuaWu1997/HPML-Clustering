@@ -26,10 +26,6 @@
 ## Metric
 
 1. Total time
-2. Accuracy
+1. Speedup
 
 
-
-$d(x,y) = (\sum^n_{i=1}(x_i - y_i)^2)^{\frac{1}{2}}$
-
-$d(x,y) = (\sum^n_{i=1}|x_i - y_i|^p)^{\frac{1}{p}}$
