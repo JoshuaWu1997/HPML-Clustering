@@ -5,7 +5,7 @@ import torch
 import torchvision
 import torchvision.transforms as transforms
 
-from sklearn.cluster import KMeans
+from sklearn.mixture import GaussianMixture
 
 
 # x = np.random.randn(1000000, 10)
@@ -15,7 +15,7 @@ from sklearn.cluster import KMeans
 # print(labels)
 
 if __name__ == '__main__':
-    cls = KMeans(init="k-means++", n_clusters=10, n_init=4, random_state=0)
+    cls = GaussianMixture(n_components=10, covariance_type='full', random_state=0)
 
     transform_test = transforms.Compose([
         transforms.ToTensor(),
@@ -34,6 +34,7 @@ if __name__ == '__main__':
         feature = feature.numpy().reshape(50000,-1)
 
         cls.fit(feature)
+        print("finish")
 
         y_kmeans = cls.predict(feature)
 
