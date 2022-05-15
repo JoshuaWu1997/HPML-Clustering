@@ -52,3 +52,22 @@ Run and profile the scripts using:
 1. Sklearn: Modify script to test on specific dataset, and run with `time python _[kmeans/gmm]_skl.py`
 
 
+
+## Results and Observations
+
+* **KMeans**
+  * Our PyTorch implementation on CPU is less efficient than sklearn.
+  * Speedup of GPU (PyTorch) on conventional kernel function (**L2**) is up to **5×**.
+  * Speedup of GPU (PyTorch) on **special kernels** is up to **13×**.
+  * Speedup of GPU (PyTorch) with **CUDA kernel extension** can be up to **16×**. 
+* **GMM**
+  * GMM is relatively **more computation intensive**.
+  * Speedup of our PyTorch implementation on CPU can be up to **9×**.
+  * This speedup can be the best utilisation of **multi-thread computing**. 
+  * Speedup of GPU (PyTorch) can be up to **122×**.
+* Partial results:
+
+<img src="graph/1.png" alt="1" style="zoom:50%;" />
+
+<img src="graph/2.png" alt="2" style="zoom:50%;" />
+
