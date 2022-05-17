@@ -75,3 +75,5 @@ Run and profile the scripts using:
 
 <img src="graph/2.png" alt="2" style="zoom:50%;" />
 
+* Accuracy:
+  * 

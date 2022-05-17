@@ -87,8 +87,8 @@ def valid_acc(testloader):
 
 if __name__ == '__main__':
     cls = GaussianMixture(n_components=10, covariance_type='full', random_state=0)
-    # cifar_test()
-    mn_test()
+    cifar_test()
+    # mn_test()
 
 
 
