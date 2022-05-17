@@ -50,7 +50,11 @@ The scripts are separate implementions based on different frames.
 Run and profile the scripts using:
 
 1. Sklearn: Modify script to test on specific dataset, and run with `time python _[kmeans/gmm]_skl.py`
-
+2. PyTorch: Use `test.py` with options:
+   * `--alg`: `kmeans++`/`gmm`
+   * `--kernel`: `l2`/`m[N]`
+   * `--kernel_cuda`: whether use customized cuda kernel
+   * `--device`: `cuda`/`cpu`
 
 
 ## Results and Observations
