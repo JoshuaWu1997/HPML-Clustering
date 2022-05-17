@@ -7,6 +7,7 @@ import torchvision
 import torchvision.transforms as transforms
 import time
 import pandas as pd
+from sklearn.metrics.cluster import adjusted_rand_score, adjusted_mutual_info_score
 
 transform_test = transforms.Compose([
     transforms.ToTensor(),
@@ -25,8 +26,10 @@ def MNIST_test(cfg):
         else:
             cls = GaussianMixture(10, device=cfg.device)
         start = time.time_ns()
-        _ = cls.fit_predict(feature)
+        predict, _, _ = cls.fit_predict(feature)
         end = time.time_ns()
+        metric = adjusted_mutual_info_score(predict, label.numpy())
+        print('ACC:', metric)
         return (end - start) / 1000000000
 
 def CIFAR_test(cfg):
@@ -41,8 +44,10 @@ def CIFAR_test(cfg):
         else:
             cls = GaussianMixture(10, device=cfg.device)
         start = time.time_ns()
-        _ = cls.fit_predict(feature)
+        predict, _, _ = cls.fit_predict(feature)
         end = time.time_ns()
+        metric = adjusted_mutual_info_score(predict, label.numpy())
+        print('ACC:', metric)
         return (end - start) / 1000000000
 
 

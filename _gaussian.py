@@ -43,18 +43,10 @@ class GaussianMixture:
                     ((resp_old - resp).norm(dim=0) < delta).sum() == self.n_components):
                 break
 
-        top = min(top, self.n_components)
         probs = torch.softmax(probs, dim=1)
-        topk = probs.topk(top, dim=1)
-        probs = topk.values.view(-1)
-        labels = topk.indices.view(-1)[probs > .1]
-        x_ind = torch.arange(x.shape[0], device=self.device).repeat_interleave(top)[probs > .1]
-        probs = probs[probs > .1]
-        ind = torch.stack([labels, x_ind])
-        select = torch.sparse_coo_tensor(ind, probs, (self.n_components, x.shape[0]))
-        weights = torch.sparse.sum(select, dim=1).to_dense()
+        labels = torch.argmax(probs, dim=-1).view(-1)
 
-        return select, weights
+        return labels.cpu().numpy(), select, weights
 
     def _m_step(self, x, resp, eps=1.e-6):
         self.pi = torch.sum(resp, dim=0, keepdim=True) + eps
