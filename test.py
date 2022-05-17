@@ -84,7 +84,7 @@ def Synthetic_test(cfg):
 if __name__ == '__main__':
     metrics = dict()
     os.makedirs('outputs', exist_ok=True)
-    for i in range(1):
+    for i in range(10):
         if params.dataset == 'CIFAR':
             use_time = CIFAR_test(params)
         elif params.dataset == 'Synthetic':
