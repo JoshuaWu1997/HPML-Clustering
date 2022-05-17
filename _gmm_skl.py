@@ -81,14 +81,14 @@ def valid_acc(testloader):
         feature = feature.numpy().reshape(10000,-1)
         test_kmeans = cls.predict(feature)
 
-        # scores = adjusted_mutual_info_score(label, test_kmeans)
-        scores = adjusted_rand_score(label, test_kmeans)
+        scores = adjusted_mutual_info_score(label, test_kmeans)
+        # scores = adjusted_rand_score(label, test_kmeans)
         print("Accuracy: %.2f%%" % (scores*100))
 
 if __name__ == '__main__':
     cls = GaussianMixture(n_components=10, covariance_type='full', random_state=0)
-    cifar_test()
-    # mn_test()
+    # cifar_test()
+    mn_test()
 
 
 

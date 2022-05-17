@@ -115,8 +115,8 @@ def valid_acc(testloader):
 
 if __name__ == '__main__':
     cls = KMeans(init="k-means++", n_clusters=10, n_init=4, random_state=0)
-    cifar_test(cls)
-    # mn_test(cls)
+    # cifar_test(cls)
+    mn_test(cls)
 
 
 
